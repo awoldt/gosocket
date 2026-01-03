@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>WebSocket Test</title>
+    </head>
+    <body>
+        <h1>WebSocket Test</h1>
+        <pre id="log"></pre>
+
+        <script>
+            const log = (msg) => {
+                document.getElementById("log").textContent += msg + "\n";
+            };
+
+            // change to your websocket URL
+            const ws = new WebSocket("ws://localhost:8080/socket");
+
+            ws.onopen = () => {
+                log("connected");
+                ws.send("hello from browser");
+            };
+
+            ws.onmessage = (e) => {
+                log("recv: " + e.data);
+            };
+
+            ws.onclose = () => {
+                log("disconnected");
+            };
+
+            ws.onerror = (e) => {
+                log("error");
+                console.error(e);
+            };
+        </script>
+    </body>
+</html>
