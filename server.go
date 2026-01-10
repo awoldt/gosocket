@@ -5,82 +5,41 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"slices"
-	"strconv"
-	"strings"
 	"sync"
 
 	"github.com/gorilla/websocket"
-	"github.com/joho/godotenv"
+	"gopkg.in/yaml.v3"
 )
+
+type Config struct {
+	Apps map[string]App `yaml:"apps"`
+}
+type App struct {
+	Url  string    `yaml:"url"`
+	Dev  AppConfig `yaml:"dev"`
+	Prod AppConfig `yaml:"prod"`
+}
+type AppConfig struct {
+	AllowedOrigins  string `yaml:"allowed_origins"`
+	WriteBufferSize int    `yaml:"write_buffer_size"`
+	ReadBufferSize  int    `yaml:"read_buffer_size"`
+}
 
 var (
 	connections []*websocket.Conn
 	mu          sync.Mutex
 )
 
-func pluralize(count int) string {
-	if count == 1 {
-		return ""
-	}
-	return "s"
-}
-
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		fmt.Println("🟨 could not read env file... using default config")
-	}
-
-	readBufferSizeStr := os.Getenv("READ_BUFFER_SIZE")
-	writeBufferSizeStr := os.Getenv("WRITE_BUFFER_SIZE")
-	readBufferSize := 1024
-	writeBufferSize := 1024
-	if readBufferSizeStr != "" {
-		i, err := strconv.Atoi(readBufferSizeStr)
-		if err == nil {
-			readBufferSize = i
-		}
-	}
-	if writeBufferSizeStr != "" {
-		i, err := strconv.Atoi(writeBufferSizeStr)
-		if err == nil {
-			writeBufferSize = i
-		}
-	}
-
-	var allowedOrigins string
-	allowedOrigins = os.Getenv("ALLOWED_ORIGINS")
+	initConfig()
 
 	var upgrader = websocket.Upgrader{
-		ReadBufferSize:  readBufferSize,
-		WriteBufferSize: writeBufferSize,
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
 		CheckOrigin: func(r *http.Request) bool {
-			if allowedOrigins == "" {
-				// allow any origins
-				return true
-			} else {
-				// allowed origins is a comma seperated string...
-				// split into slice and user all defined
-				origins := strings.Split(allowedOrigins, ",")
-				if len(origins) == 1 {
-					if r.Host == origins[0] {
-						return true
-					} else {
-						return false
-					}
-				} else {
-					if slices.Contains(origins, r.Host) {
-						return true
-					} else {
-						return false
-					}
-				}
-			}
+			return true
 		},
 	}
-
-	fmt.Printf("config\nallowed origins: %v\nreadBufferSize: %v\nwriteBufferSize: %v\n", allowedOrigins, readBufferSize, writeBufferSize)
 
 	http.HandleFunc("/socket", func(w http.ResponseWriter, r *http.Request) {
 		conn, err := upgrader.Upgrade(w, r, nil)
@@ -139,4 +98,29 @@ func main() {
 
 	log.Println("websocket server listening on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+
+func pluralize(count int) string {
+	if count == 1 {
+		return ""
+	}
+	return "s"
+}
+
+func initConfig() {
+	data, err := os.ReadFile("config.yaml")
+	if err != nil {
+		fmt.Println("no config found")
+	}
+
+	fmt.Println(string(data))
+
+	var config Config
+
+	if err = yaml.Unmarshal(data, &config); err != nil {
+		fmt.Println(err.Error())
+		panic("error while reading yaml config")
+	}
+
+	fmt.Println(config.Apps)
 }
