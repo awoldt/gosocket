@@ -1,11 +1,9 @@
 dev:
-  url: chat
   allowed_origins:
     - localhost:8080
   write_buffer_size: 1024
   read_buffer_size: 1024
 prod:
-  url: chat
   allowed_origins:
     - localhost:8080
   write_buffer_size: 1024

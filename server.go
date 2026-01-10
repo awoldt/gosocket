@@ -18,20 +18,19 @@ type Config struct {
 	Dev  AppConfig `yaml:"dev"`
 	Prod AppConfig `yaml:"prod"`
 }
+
 type AppConfig struct {
-	Url             string   `yaml:"url"`
 	AllowedOrigins  []string `yaml:"allowed_origins"`
 	WriteBufferSize int      `yaml:"write_buffer_size"`
 	ReadBufferSize  int      `yaml:"read_buffer_size"`
 }
 
 var (
-	connections []*websocket.Conn
-	mu          sync.Mutex
+	mu    sync.Mutex
+	rooms = make(map[string][]*websocket.Conn) // KEY ROOM -> VALUE CONNECTIONS
 )
 
 func main() {
-
 	cmd := &cli.Command{
 		Name: "websoget",
 		Flags: []cli.Flag{&cli.StringFlag{
@@ -73,7 +72,7 @@ func main() {
 				},
 			}
 
-			http.HandleFunc(fmt.Sprintf("/%v", config.Url), func(w http.ResponseWriter, r *http.Request) {
+			http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 				conn, err := upgrader.Upgrade(w, r, nil)
 				if err != nil {
 					log.Println(err)
@@ -82,50 +81,37 @@ func main() {
 
 				defer conn.Close()
 
-				// add connection
+				// join room
+				roomName := r.URL.Path
+				usersInRoom := rooms[roomName]
+				usersInRoom = append(usersInRoom, conn)
 				mu.Lock()
-				connections = append(connections, conn)
-				mu.Unlock()
-
-				// notify everyone about new user
-				mu.Lock()
-				userCount := len(connections)
-				for _, c := range connections {
-					c.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("New user joined! %d user%s online", userCount, "RAWR")))
-				}
+				rooms[roomName] = usersInRoom
 				mu.Unlock()
 
 				for {
-					messageType, message, err := conn.ReadMessage()
+					messageType, p, err := conn.ReadMessage()
 					if err != nil {
-						log.Println(err)
-						// remove connection on error
-						mu.Lock()
-						for i, c := range connections {
-							if c == conn {
-								connections = append(connections[:i], connections[i+1:]...)
-								break
+						// leave room
+						var updatedUsersInRoom []*websocket.Conn
+						for _, v := range rooms[roomName] {
+							if v == conn {
+								continue
 							}
+							updatedUsersInRoom = append(updatedUsersInRoom, v)
 						}
-						userCount := len(connections)
-						// notify remaining users
-						for _, c := range connections {
-							c.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("User left. %d user%s online", userCount, "rawr")))
-						}
+						mu.Lock()
+						rooms[roomName] = updatedUsersInRoom
 						mu.Unlock()
+
+						log.Println(err)
 						return
 					}
-
-					// broadcast message to everyone
-					mu.Lock()
-					for _, c := range connections {
-						if err := c.WriteMessage(messageType, message); err != nil {
-							log.Println(err)
-						}
+					if err := conn.WriteMessage(messageType, p); err != nil {
+						log.Println(err)
+						return
 					}
-					mu.Unlock()
 				}
-
 			})
 
 			log.Println("websocket server listening on :8080")
@@ -151,11 +137,12 @@ func initConfig(mode string) (AppConfig, error) {
 	}
 
 	// return the config for the mode passed in
-	if mode == "dev" {
+	switch mode {
+	case "dev":
 		return config.Dev, nil
-	} else if mode == "prod" {
+	case "prod":
 		return config.Prod, nil
-	} else {
+	default:
 		return AppConfig{}, fmt.Errorf("cannot return config for mode " + mode)
 	}
 }
