@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"slices"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -14,17 +15,14 @@ import (
 )
 
 type Config struct {
-	Apps map[string]App `yaml:"apps"`
-}
-type App struct {
-	Url  string    `yaml:"url"`
 	Dev  AppConfig `yaml:"dev"`
 	Prod AppConfig `yaml:"prod"`
 }
 type AppConfig struct {
-	AllowedOrigins  string `yaml:"allowed_origins"`
-	WriteBufferSize int    `yaml:"write_buffer_size"`
-	ReadBufferSize  int    `yaml:"read_buffer_size"`
+	Url             string   `yaml:"url"`
+	AllowedOrigins  []string `yaml:"allowed_origins"`
+	WriteBufferSize int      `yaml:"write_buffer_size"`
+	ReadBufferSize  int      `yaml:"read_buffer_size"`
 }
 
 var (
@@ -33,11 +31,6 @@ var (
 )
 
 func main() {
-	_, err := initConfig()
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
 
 	cmd := &cli.Command{
 		Name: "websoget",
@@ -45,29 +38,42 @@ func main() {
 			Name:     "mode",
 			Usage:    "dev or prod",
 			Required: true,
+			Validator: func(s string) error {
+				if s != "dev" && s != "prod" {
+					return fmt.Errorf("not a valid mode")
+				}
+				return nil
+			},
 		}, &cli.StringFlag{
 			Name:  "port",
 			Value: "8080",
 		}},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			mode := cmd.String("mode")
-			if mode != "dev" && mode != "prod" {
-				return fmt.Errorf("not a valid mode")
+			port := cmd.String("port")
+
+			config, err := initConfig(mode)
+			if err != nil {
+				fmt.Println(err.Error())
+				return fmt.Errorf("error while initializing config")
 			}
 
-			fmt.Printf("running websocket server in %v mode", mode)
-
-			initConfig()
-
 			var upgrader = websocket.Upgrader{
-				ReadBufferSize:  1024,
-				WriteBufferSize: 1024,
+				ReadBufferSize:  config.ReadBufferSize,
+				WriteBufferSize: config.WriteBufferSize,
 				CheckOrigin: func(r *http.Request) bool {
-					return true
+					// if no origins set, allow all
+					if len(config.AllowedOrigins) == 0 {
+						return true
+					}
+					if slices.Contains(config.AllowedOrigins, r.Host) {
+						return true
+					}
+					return false
 				},
 			}
 
-			http.HandleFunc("/socket", func(w http.ResponseWriter, r *http.Request) {
+			http.HandleFunc(fmt.Sprintf("/%v", config.Url), func(w http.ResponseWriter, r *http.Request) {
 				conn, err := upgrader.Upgrade(w, r, nil)
 				if err != nil {
 					log.Println(err)
@@ -123,7 +129,7 @@ func main() {
 			})
 
 			log.Println("websocket server listening on :8080")
-			log.Fatal(http.ListenAndServe(":8080", nil))
+			log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", port), nil))
 			return nil
 		},
 	}
@@ -133,17 +139,23 @@ func main() {
 	}
 }
 
-func initConfig() (Config, error) {
+func initConfig(mode string) (AppConfig, error) {
 	data, err := os.ReadFile("config.yaml")
 	if err != nil {
-		return Config{}, fmt.Errorf("could not find config file")
+		return AppConfig{}, fmt.Errorf("could not find config file")
 	}
 
 	var config Config
-
 	if err = yaml.Unmarshal(data, &config); err != nil {
-		return Config{}, fmt.Errorf("error while reading config file")
+		return AppConfig{}, fmt.Errorf("error while reading config file")
 	}
 
-	return config, nil
+	// return the config for the mode passed in
+	if mode == "dev" {
+		return config.Dev, nil
+	} else if mode == "prod" {
+		return config.Prod, nil
+	} else {
+		return AppConfig{}, fmt.Errorf("cannot return config for mode " + mode)
+	}
 }
