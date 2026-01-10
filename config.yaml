@@ -1,6 +1,7 @@
 dev:
   allowed_origins:
     - localhost:8080
+    - localhost:1234
   write_buffer_size: 1024
   read_buffer_size: 1024
 prod:

@@ -114,7 +114,7 @@ func main() {
 				}
 			})
 
-			log.Println("websocket server listening on :8080")
+			log.Printf("websocket server listening on :%v\n", port)
 			log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", port), nil))
 			return nil
 		},
