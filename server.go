@@ -13,10 +13,11 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
-		if r.Host != "" {
+		if r.Host == "localhost:8080" {
 			return true
+		} else {
+			return false
 		}
-		return false
 	},
 }
 
