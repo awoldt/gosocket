@@ -107,9 +107,13 @@ func main() {
 						log.Println(err)
 						return
 					}
-					if err := conn.WriteMessage(messageType, p); err != nil {
-						log.Println(err)
-						return
+
+					// send message back to all clients within this room
+					for _, v := range rooms[roomName] {
+						if err := v.WriteMessage(messageType, p); err != nil {
+							log.Println(err)
+							return
+						}
 					}
 				}
 			})
