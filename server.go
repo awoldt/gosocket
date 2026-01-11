@@ -104,7 +104,8 @@ func main() {
 									messageType, p, err := conn.ReadMessage()
 									if err != nil {
 										// leave room
-										var updatedUsersInRoom []*websocket.Conn
+										updatedUsersInRoom := []*websocket.Conn{}
+
 										mu.Lock()
 										for _, v := range rooms[roomName] {
 											if v == conn {
@@ -112,7 +113,13 @@ func main() {
 											}
 											updatedUsersInRoom = append(updatedUsersInRoom, v)
 										}
-										rooms[roomName] = updatedUsersInRoom
+
+										if len(updatedUsersInRoom) == 0 {
+											// nobody in room anymore... just delete room from map
+											delete(rooms, roomName)
+										} else {
+											rooms[roomName] = updatedUsersInRoom
+										}
 										mu.Unlock()
 
 										log.Println(err)
@@ -120,7 +127,7 @@ func main() {
 									}
 
 									// send message back to all clients within this room
-									// DONT lock while WriteMessage is going (can cause bad performance)
+									// DONT lock while WriteMessage is going (can cause bad performance for slow clients)
 									// lock, create a copy of connections slice, unlock, THEN WriteMessage
 									mu.RLock()
 									conns := append(make([]*websocket.Conn, 0), rooms[roomName]...)
