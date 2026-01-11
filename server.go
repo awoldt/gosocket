@@ -32,7 +32,8 @@ var (
 
 func main() {
 	cmd := &cli.Command{
-		Name: "websoget",
+		Name:        "gosocket",
+		Description: "A lightweight Go-based CLI for interacting with WebSocket APIs",
 		Flags: []cli.Flag{&cli.StringFlag{
 			Name:     "mode",
 			Usage:    "dev or prod",
@@ -53,8 +54,7 @@ func main() {
 
 			config, err := initConfig(mode)
 			if err != nil {
-				fmt.Println(err.Error())
-				return fmt.Errorf("error while initializing config")
+				return fmt.Errorf("%s", err.Error())
 			}
 
 			var upgrader = websocket.Upgrader{
@@ -130,9 +130,36 @@ func main() {
 }
 
 func initConfig(mode string) (AppConfig, error) {
-	data, err := os.ReadFile("config.yaml")
+	configFile := "config.yaml"
+
+	// see if the config file exists
+	// if not, create a default one for user
+	_, err := os.Stat(configFile)
 	if err != nil {
-		return AppConfig{}, fmt.Errorf("could not find config file")
+		var defaultConfig Config = Config{
+			Dev: AppConfig{
+				AllowedOrigins:  []string{},
+				ReadBufferSize:  1024,
+				WriteBufferSize: 1024,
+			},
+			Prod: AppConfig{
+				AllowedOrigins:  []string{},
+				ReadBufferSize:  1024,
+				WriteBufferSize: 1024,
+			},
+		}
+
+		yamlTxt, err := yaml.Marshal(&defaultConfig)
+		if err != nil {
+			return AppConfig{}, fmt.Errorf("there was an error while marshalling default yaml config")
+		}
+		os.WriteFile(configFile, yamlTxt, 0644)
+		fmt.Println("initialzed defualt config yaml")
+	}
+
+	data, err := os.ReadFile(configFile)
+	if err != nil {
+		return AppConfig{}, fmt.Errorf("there was an error while reading config file")
 	}
 
 	var config Config
@@ -147,6 +174,6 @@ func initConfig(mode string) (AppConfig, error) {
 	case "prod":
 		return config.Prod, nil
 	default:
-		return AppConfig{}, fmt.Errorf("cannot return config for mode " + mode)
+		return AppConfig{}, fmt.Errorf("%s", "cannot return config for mode "+mode)
 	}
 }
