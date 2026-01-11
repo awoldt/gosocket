@@ -26,7 +26,7 @@ type AppConfig struct {
 }
 
 var (
-	mu    sync.Mutex
+	mu    sync.RWMutex
 	rooms = make(map[string][]*websocket.Conn) // KEY ROOM -> VALUE CONNECTIONS
 )
 
@@ -35,16 +35,6 @@ func main() {
 		Name:        "gosocket",
 		Description: "A lightweight Go-based CLI for interacting with WebSocket APIs",
 		Flags: []cli.Flag{&cli.StringFlag{
-			Name:     "mode",
-			Usage:    "dev or prod",
-			Required: true,
-			Validator: func(s string) error {
-				if s != "dev" && s != "prod" {
-					return fmt.Errorf("not a valid mode")
-				}
-				return nil
-			},
-		}, &cli.StringFlag{
 			Name:  "port",
 			Value: "8080",
 		}},
@@ -57,10 +47,8 @@ func main() {
 						Name:  "dev",
 						Usage: "Starts the websocket server in development mode",
 						Action: func(ctx context.Context, cmd *cli.Command) error {
-							mode := cmd.String("mode")
 							port := cmd.String("port")
-
-							config, err := initConfig(mode)
+							config, err := initConfig("dev")
 							if err != nil {
 								return fmt.Errorf("%s", err.Error())
 							}
@@ -80,6 +68,21 @@ func main() {
 								},
 							}
 
+							http.HandleFunc("/stats", func(w http.ResponseWriter, r *http.Request) {
+								// count the number of rooms and all connections
+
+								numOfRooms := 0
+								numOfConnections := 0
+								mu.RLock()
+								for _, v := range rooms {
+									numOfRooms++
+									numOfConnections += len(v)
+								}
+								mu.RUnlock()
+
+								w.Write([]byte(fmt.Sprintf("there are %v rooms and %v connections", numOfRooms, numOfConnections)))
+							})
+
 							http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 								conn, err := upgrader.Upgrade(w, r, nil)
 								if err != nil {
@@ -91,9 +94,9 @@ func main() {
 
 								// join room
 								roomName := r.URL.Path
+								mu.Lock()
 								usersInRoom := rooms[roomName]
 								usersInRoom = append(usersInRoom, conn)
-								mu.Lock()
 								rooms[roomName] = usersInRoom
 								mu.Unlock()
 
@@ -102,13 +105,13 @@ func main() {
 									if err != nil {
 										// leave room
 										var updatedUsersInRoom []*websocket.Conn
+										mu.Lock()
 										for _, v := range rooms[roomName] {
 											if v == conn {
 												continue
 											}
 											updatedUsersInRoom = append(updatedUsersInRoom, v)
 										}
-										mu.Lock()
 										rooms[roomName] = updatedUsersInRoom
 										mu.Unlock()
 
@@ -117,12 +120,18 @@ func main() {
 									}
 
 									// send message back to all clients within this room
-									for _, v := range rooms[roomName] {
+									// DONT lock while WriteMessage is going (can cause bad performance)
+									// lock, create a copy of connections slice, unlock, THEN WriteMessage
+									mu.RLock()
+									conns := append(make([]*websocket.Conn, 0), rooms[roomName]...)
+									mu.RUnlock()
+									for _, v := range conns {
 										if err := v.WriteMessage(messageType, p); err != nil {
 											log.Println(err)
 											return
 										}
 									}
+
 								}
 							})
 
@@ -186,6 +195,6 @@ func initConfig(mode string) (AppConfig, error) {
 	case "prod":
 		return config.Prod, nil
 	default:
-		return AppConfig{}, fmt.Errorf("%s", "cannot return config for mode "+mode)
+		return AppConfig{}, fmt.Errorf("%s is not a valid mode", mode)
 	}
 }
