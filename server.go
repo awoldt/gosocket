@@ -48,79 +48,91 @@ func main() {
 			Name:  "port",
 			Value: "8080",
 		}},
-		Action: func(ctx context.Context, cmd *cli.Command) error {
-			mode := cmd.String("mode")
-			port := cmd.String("port")
+		Commands: []*cli.Command{
+			{
+				Name:  "start",
+				Usage: "Starts the websocket server",
+				Commands: []*cli.Command{
+					{
+						Name:  "dev",
+						Usage: "Starts the websocket server in development mode",
+						Action: func(ctx context.Context, cmd *cli.Command) error {
+							mode := cmd.String("mode")
+							port := cmd.String("port")
 
-			config, err := initConfig(mode)
-			if err != nil {
-				return fmt.Errorf("%s", err.Error())
-			}
-
-			var upgrader = websocket.Upgrader{
-				ReadBufferSize:  config.ReadBufferSize,
-				WriteBufferSize: config.WriteBufferSize,
-				CheckOrigin: func(r *http.Request) bool {
-					// if no origins set, allow all
-					if len(config.AllowedOrigins) == 0 {
-						return true
-					}
-					if slices.Contains(config.AllowedOrigins, r.Host) {
-						return true
-					}
-					return false
-				},
-			}
-
-			http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-				conn, err := upgrader.Upgrade(w, r, nil)
-				if err != nil {
-					log.Println(err)
-					return
-				}
-
-				defer conn.Close()
-
-				// join room
-				roomName := r.URL.Path
-				usersInRoom := rooms[roomName]
-				usersInRoom = append(usersInRoom, conn)
-				mu.Lock()
-				rooms[roomName] = usersInRoom
-				mu.Unlock()
-
-				for {
-					messageType, p, err := conn.ReadMessage()
-					if err != nil {
-						// leave room
-						var updatedUsersInRoom []*websocket.Conn
-						for _, v := range rooms[roomName] {
-							if v == conn {
-								continue
+							config, err := initConfig(mode)
+							if err != nil {
+								return fmt.Errorf("%s", err.Error())
 							}
-							updatedUsersInRoom = append(updatedUsersInRoom, v)
-						}
-						mu.Lock()
-						rooms[roomName] = updatedUsersInRoom
-						mu.Unlock()
 
-						log.Println(err)
-						return
-					}
+							var upgrader = websocket.Upgrader{
+								ReadBufferSize:  config.ReadBufferSize,
+								WriteBufferSize: config.WriteBufferSize,
+								CheckOrigin: func(r *http.Request) bool {
+									// if no origins set, allow all
+									if len(config.AllowedOrigins) == 0 {
+										return true
+									}
+									if slices.Contains(config.AllowedOrigins, r.Host) {
+										return true
+									}
+									return false
+								},
+							}
 
-					// send message back to all clients within this room
-					for _, v := range rooms[roomName] {
-						if err := v.WriteMessage(messageType, p); err != nil {
-							log.Println(err)
-							return
-						}
-					}
-				}
-			})
+							http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+								conn, err := upgrader.Upgrade(w, r, nil)
+								if err != nil {
+									log.Println(err)
+									return
+								}
 
-			log.Printf("websocket server listening on :%v\n", port)
-			log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", port), nil))
-			return nil
+								defer conn.Close()
+
+								// join room
+								roomName := r.URL.Path
+								usersInRoom := rooms[roomName]
+								usersInRoom = append(usersInRoom, conn)
+								mu.Lock()
+								rooms[roomName] = usersInRoom
+								mu.Unlock()
+
+								for {
+									messageType, p, err := conn.ReadMessage()
+									if err != nil {
+										// leave room
+										var updatedUsersInRoom []*websocket.Conn
+										for _, v := range rooms[roomName] {
+											if v == conn {
+												continue
+											}
+											updatedUsersInRoom = append(updatedUsersInRoom, v)
+										}
+										mu.Lock()
+										rooms[roomName] = updatedUsersInRoom
+										mu.Unlock()
+
+										log.Println(err)
+										return
+									}
+
+									// send message back to all clients within this room
+									for _, v := range rooms[roomName] {
+										if err := v.WriteMessage(messageType, p); err != nil {
+											log.Println(err)
+											return
+										}
+									}
+								}
+							})
+
+							log.Printf("websocket server listening on :%v\n", port)
+							log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", port), nil))
+							return nil
+						},
+					},
+				},
+			},
 		},
 	}
 
