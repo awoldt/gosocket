@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"slices"
@@ -24,6 +23,12 @@ type AppConfig struct {
 	AllowedOrigins  []string `yaml:"allowed_origins"`
 	WriteBufferSize int      `yaml:"write_buffer_size"`
 	ReadBufferSize  int      `yaml:"read_buffer_size"`
+	Auth            Auth     `yaml:"auth"`
+}
+
+type Auth struct {
+	Enabled bool   `yaml:"enabled"`
+	Token   string `yaml:"token"`
 }
 
 var (
@@ -143,7 +148,7 @@ func main() {
 								}
 							})
 
-							log.Printf("websocket server listening on :%v\n", port)
+							logrus.Infof("websocket server listening on :%v\n", port)
 							logrus.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", port), nil))
 							return nil
 						},
@@ -170,11 +175,18 @@ func initConfig(mode string) (AppConfig, error) {
 				AllowedOrigins:  []string{},
 				ReadBufferSize:  1024,
 				WriteBufferSize: 1024,
+				Auth: Auth{
+					Enabled: false,
+				},
 			},
 			Prod: AppConfig{
 				AllowedOrigins:  []string{},
 				ReadBufferSize:  1024,
 				WriteBufferSize: 1024,
+				Auth: Auth{
+					Enabled: true,
+					Token:   "RAWR_UWU",
+				},
 			},
 		}
 
@@ -183,7 +195,7 @@ func initConfig(mode string) (AppConfig, error) {
 			return AppConfig{}, fmt.Errorf("there was an error while marshalling default yaml config")
 		}
 		os.WriteFile(configFile, yamlTxt, 0644)
-		fmt.Println("initialzed defualt config yaml")
+		logrus.Info("initialized default config yaml")
 	}
 
 	data, err := os.ReadFile(configFile)
