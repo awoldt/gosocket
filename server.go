@@ -208,12 +208,27 @@ func initConfig(mode string) (AppConfig, error) {
 }
 
 func buildStatsPage() string {
+	type statsResponse struct {
+		totalRooms       int
+		totalConnections int
+		rooms            map[string][]*websocket.Conn
+	}
+
 	numOfRooms := 0
 	numOfConnections := 0
 	mu.RLock()
 	for _, v := range rooms {
 		numOfRooms++
 		numOfConnections += len(v)
+	}
+
+	roomListHTML := ""
+	for name, conns := range rooms {
+		roomListHTML += fmt.Sprintf(`
+            <tr>
+                <td>%s</td>
+                <td>%d</td>
+            </tr>`, name, len(conns))
 	}
 	mu.RUnlock()
 
@@ -250,6 +265,7 @@ func buildStatsPage() string {
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 1.5rem;
             margin-top: 2rem;
+            margin-bottom: 2rem;
         }
         .stat-card {
             background-color: #ecf0f1;
@@ -271,6 +287,29 @@ func buildStatsPage() string {
             letter-spacing: 1px;
             margin-top: 0.5rem;
         }
+        .rooms-section {
+            margin-top: 2rem;
+        }
+        table {
+            min-width: 400px;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+            color: #2c3e50;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+        tr:hover {
+            background-color: #f1f4f6;
+        }
         .footer {
             margin-top: 2rem;
             font-size: 0.8rem;
@@ -282,6 +321,7 @@ func buildStatsPage() string {
 <body>
     <div class="container">
         <h1>Socket Server Statistics</h1>
+        
         <div class="stats-grid">
             <div class="stat-card">
                 <span class="stat-value">%d</span>
@@ -292,11 +332,26 @@ func buildStatsPage() string {
                 <span class="stat-label">Total Connections</span>
             </div>
         </div>
+
+        <div class="rooms-section">
+            <h2>Active Rooms Breakdown</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Room Name</th>
+                        <th>Connections</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    %s
+                </tbody>
+            </table>
+        </div>
     </div>
     <div class="footer">
         GoSocket Server • %s
     </div>
 </body>
 </html>
-`, numOfRooms, numOfConnections, "Live Updates")
+`, numOfRooms, numOfConnections, roomListHTML, "Live Updates")
 }
