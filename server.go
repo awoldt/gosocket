@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"github.com/gorilla/websocket"
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v3"
 	"gopkg.in/yaml.v3"
 )
@@ -50,8 +51,14 @@ func main() {
 							port := cmd.String("port")
 							config, err := initConfig("dev")
 							if err != nil {
+								logrus.Error("there was an error while initializing config")
 								return fmt.Errorf("%s", err.Error())
 							}
+
+							logrus.SetFormatter(&logrus.TextFormatter{
+								FullTimestamp:   true,
+								TimestampFormat: "2006-01-02 15:04:05",
+							})
 
 							var upgrader = websocket.Upgrader{
 								ReadBufferSize:  config.ReadBufferSize,
@@ -86,7 +93,7 @@ func main() {
 							http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 								conn, err := upgrader.Upgrade(w, r, nil)
 								if err != nil {
-									log.Println(err)
+									logrus.Error(err)
 									return
 								}
 
@@ -99,6 +106,8 @@ func main() {
 								usersInRoom = append(usersInRoom, conn)
 								rooms[roomName] = usersInRoom
 								mu.Unlock()
+
+								logrus.Info("someone has joined room " + roomName)
 
 								for {
 									messageType, p, err := conn.ReadMessage()
@@ -122,7 +131,7 @@ func main() {
 										}
 										mu.Unlock()
 
-										log.Println(err)
+										logrus.Info("someone has left room " + roomName)
 										return
 									}
 
@@ -134,7 +143,7 @@ func main() {
 									mu.RUnlock()
 									for _, v := range conns {
 										if err := v.WriteMessage(messageType, p); err != nil {
-											log.Println(err)
+											logrus.Error(err)
 											return
 										}
 									}
@@ -143,7 +152,7 @@ func main() {
 							})
 
 							log.Printf("websocket server listening on :%v\n", port)
-							log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", port), nil))
+							logrus.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", port), nil))
 							return nil
 						},
 					},
@@ -153,7 +162,7 @@ func main() {
 	}
 
 	if err := cmd.Run(context.Background(), os.Args); err != nil {
-		log.Fatal(err)
+		logrus.Fatal(err)
 	}
 }
 
