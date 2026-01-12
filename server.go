@@ -77,17 +77,9 @@ func main() {
 
 							http.HandleFunc("/stats", func(w http.ResponseWriter, r *http.Request) {
 								// count the number of rooms and all connections
+								htmlPage := buildStatsPage()
 
-								numOfRooms := 0
-								numOfConnections := 0
-								mu.RLock()
-								for _, v := range rooms {
-									numOfRooms++
-									numOfConnections += len(v)
-								}
-								mu.RUnlock()
-
-								w.Write([]byte(fmt.Sprintf("there are %v rooms and %v connections", numOfRooms, numOfConnections)))
+								w.Write([]byte(htmlPage))
 							})
 
 							http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -213,4 +205,98 @@ func initConfig(mode string) (AppConfig, error) {
 	default:
 		return AppConfig{}, fmt.Errorf("%s is not a valid mode", mode)
 	}
+}
+
+func buildStatsPage() string {
+	numOfRooms := 0
+	numOfConnections := 0
+	mu.RLock()
+	for _, v := range rooms {
+		numOfRooms++
+		numOfConnections += len(v)
+	}
+	mu.RUnlock()
+
+	return fmt.Sprintf(`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Socket Server Stats</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            background-color: #f4f7f6;
+        }
+        .container {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 0.5rem;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        .stat-card {
+            background-color: #ecf0f1;
+            padding: 1.5rem;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .stat-value {
+            display: block;
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #3498db;
+        }
+        .stat-label {
+            display: block;
+            font-size: 1rem;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 0.5rem;
+        }
+        .footer {
+            margin-top: 2rem;
+            font-size: 0.8rem;
+            color: #bdc3c7;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Socket Server Statistics</h1>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-value">%d</span>
+                <span class="stat-label">Active Rooms</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value">%d</span>
+                <span class="stat-label">Total Connections</span>
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        GoSocket Server • %s
+    </div>
+</body>
+</html>
+`, numOfRooms, numOfConnections, "Live Updates")
 }
