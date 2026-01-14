@@ -23,12 +23,7 @@ type AppConfig struct {
 	AllowedOrigins  []string `yaml:"allowed_origins"`
 	WriteBufferSize int      `yaml:"write_buffer_size"`
 	ReadBufferSize  int      `yaml:"read_buffer_size"`
-	Auth            Auth     `yaml:"auth"`
-}
-
-type Auth struct {
-	Enabled bool   `yaml:"enabled"`
-	Token   string `yaml:"token"`
+	AuthToken       string   `yaml:"auth_token"`
 }
 
 var (
@@ -97,11 +92,9 @@ func main() {
 								defer conn.Close()
 
 								// auth
-								if config.Auth.Enabled {
-
+								if config.AuthToken != "" {
 									token := r.URL.Query().Get("token")
-									logrus.Info("we need auth and its", config.Auth.Token, "and the token in url is ", token)
-									if token == "" || token != config.Auth.Token {
+									if token == "" || token != config.AuthToken {
 										w.WriteHeader(401)
 										w.Write([]byte("Unauthorized"))
 										return
@@ -187,18 +180,12 @@ func initConfig(mode string) (AppConfig, error) {
 				AllowedOrigins:  []string{},
 				ReadBufferSize:  1024,
 				WriteBufferSize: 1024,
-				Auth: Auth{
-					Enabled: false,
-				},
 			},
 			Prod: AppConfig{
 				AllowedOrigins:  []string{},
 				ReadBufferSize:  1024,
 				WriteBufferSize: 1024,
-				Auth: Auth{
-					Enabled: true,
-					Token:   "123abc",
-				},
+				AuthToken:       "123abc",
 			},
 		}
 
