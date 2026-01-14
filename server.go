@@ -82,13 +82,6 @@ func main() {
 							})
 
 							http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-								conn, err := upgrader.Upgrade(w, r, nil)
-								if err != nil {
-									logrus.Error(err)
-									return
-								}
-
-								defer conn.Close()
 
 								// auth
 								if config.AuthToken != "" {
@@ -99,6 +92,14 @@ func main() {
 										return
 									}
 								}
+
+								conn, err := upgrader.Upgrade(w, r, nil)
+								if err != nil {
+									logrus.Error(err)
+									return
+								}
+
+								defer conn.Close()
 
 								// join room
 								roomName := r.URL.Path
