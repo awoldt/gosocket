@@ -96,6 +96,18 @@ func main() {
 
 								defer conn.Close()
 
+								// auth
+								if config.Auth.Enabled {
+
+									token := r.URL.Query().Get("token")
+									logrus.Info("we need auth and its", config.Auth.Token, "and the token in url is ", token)
+									if token == "" || token != config.Auth.Token {
+										w.WriteHeader(401)
+										w.Write([]byte("Unauthorized"))
+										return
+									}
+								}
+
 								// join room
 								roomName := r.URL.Path
 								mu.Lock()
@@ -185,7 +197,7 @@ func initConfig(mode string) (AppConfig, error) {
 				WriteBufferSize: 1024,
 				Auth: Auth{
 					Enabled: true,
-					Token:   "RAWR_UWU",
+					Token:   "123abc",
 				},
 			},
 		}
@@ -333,7 +345,7 @@ func buildStatsPage() string {
 <body>
     <div class="container">
         <h1>Socket Server Statistics</h1>
-        
+
         <div class="stats-grid">
             <div class="stat-card">
                 <span class="stat-value">%d</span>
