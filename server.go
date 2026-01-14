@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"slices"
+	"strings"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -24,6 +25,7 @@ type AppConfig struct {
 	WriteBufferSize int      `yaml:"write_buffer_size"`
 	ReadBufferSize  int      `yaml:"read_buffer_size"`
 	AuthToken       string   `yaml:"auth_token"`
+	Port            string   `yaml:"port"`
 }
 
 var (
@@ -35,10 +37,6 @@ func main() {
 	cmd := &cli.Command{
 		Name:        "gosocket",
 		Description: "A lightweight Go-based CLI for interacting with WebSocket APIs",
-		Flags: []cli.Flag{&cli.StringFlag{
-			Name:  "port",
-			Value: "8080",
-		}},
 		Commands: []*cli.Command{
 			{
 				Name:  "start",
@@ -48,7 +46,6 @@ func main() {
 						Name:  "dev",
 						Usage: "Starts the websocket server in development mode",
 						Action: func(ctx context.Context, cmd *cli.Command) error {
-							port := cmd.String("port")
 							config, err := initConfig("dev")
 							if err != nil {
 								logrus.Error("there was an error while initializing config")
@@ -59,6 +56,8 @@ func main() {
 								FullTimestamp:   true,
 								TimestampFormat: "2006-01-02 15:04:05",
 							})
+
+							port := config.Port
 
 							var upgrader = websocket.Upgrader{
 								ReadBufferSize:  config.ReadBufferSize,
@@ -180,12 +179,14 @@ func initConfig(mode string) (AppConfig, error) {
 				AllowedOrigins:  []string{},
 				ReadBufferSize:  1024,
 				WriteBufferSize: 1024,
+				Port:            "8080",
 			},
 			Prod: AppConfig{
 				AllowedOrigins:  []string{},
 				ReadBufferSize:  1024,
 				WriteBufferSize: 1024,
 				AuthToken:       "123abc",
+				Port:            "8080",
 			},
 		}
 
@@ -233,13 +234,13 @@ func buildStatsPage() string {
 		numOfConnections += len(v)
 	}
 
-	roomListHTML := ""
+	var html strings.Builder
 	for name, conns := range rooms {
-		roomListHTML += fmt.Sprintf(`
+		html.WriteString(fmt.Sprintf(`
             <tr>
                 <td>%s</td>
                 <td>%d</td>
-            </tr>`, name, len(conns))
+            </tr>`, name, len(conns)))
 	}
 	mu.RUnlock()
 
@@ -364,5 +365,5 @@ func buildStatsPage() string {
     </div>
 </body>
 </html>
-`, numOfRooms, numOfConnections, roomListHTML, "Live Updates")
+`, numOfRooms, numOfConnections, html.String(), "Live Updates")
 }
