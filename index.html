@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>gosocket - Lightweight Pub/Sub WebSocket Server</title>
+    <style>
+        :root {
+            --go-blue: #00ADD8;
+            --go-blue-dark: #007d9c;
+            --go-blue-light: #00758d;
+            --bg-light: #ffffff;
+            --bg-code: #f6f8fa;
+            --text-primary: #24292f;
+            --text-secondary: #57606a;
+            --border-color: #d0d7de;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        header {
+            background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
+            border-bottom: 2px solid var(--go-blue);
+            padding: 3rem 1rem;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 3rem;
+            color: var(--go-blue);
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        header p {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        section {
+            margin-bottom: 3rem;
+        }
+
+        h2 {
+            color: var(--go-blue);
+            font-size: 1.75rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--go-blue);
+            display: inline-block;
+        }
+
+        h3 {
+            color: var(--go-blue-light);
+            font-size: 1.25rem;
+            margin: 1.5rem 0 0.75rem 0;
+        }
+
+        p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        pre {
+            background-color: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        code {
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.9rem;
+            color: var(--go-blue-light);
+        }
+
+        pre code {
+            color: var(--text-primary);
+        }
+
+        .config-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .config-table th,
+        .config-table td {
+            text-align: left;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .config-table th {
+            background-color: var(--bg-code);
+            color: var(--go-blue);
+            font-weight: 600;
+        }
+
+        .config-table td {
+            color: var(--text-secondary);
+        }
+
+        .config-table td:first-child {
+            color: var(--go-blue-light);
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+        }
+
+        .feature-list {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .feature-list li {
+            background-color: var(--bg-code);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .feature-list li strong {
+            color: var(--go-blue);
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .badge {
+            display: inline-block;
+            background-color: var(--go-blue);
+            color: #ffffff;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        footer a {
+            color: var(--go-blue);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        .comment {
+            color: #6a737d;
+        }
+
+        .string {
+            color: #0a3069;
+        }
+
+        .keyword {
+            color: #cf222e;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>gosocket</h1>
+        <p>A lightweight, scalable pub/sub WebSocket server written in Go. Simple to install, easy to configure.</p>
+    </header>
+
+    <div class="container">
+        <section>
+            <h2>Features</h2>
+            <ul class="feature-list">
+                <li>
+                    <strong>Room-Based Pub/Sub</strong>
+                    Clients join rooms via URL path. Messages broadcast to all room members.
+                </li>
+                <li>
+                    <strong>YAML Configuration</strong>
+                    Simple config file for origins, buffer sizes, auth, and port settings.
+                </li>
+                <li>
+                    <strong>Token Authentication</strong>
+                    Optional auth token support via query parameter for secure connections.
+                </li>
+                <li>
+                    <strong>Live Stats</strong>
+                    Built-in /stats endpoint to monitor active rooms and connections.
+                </li>
+                <li>
+                    <strong>Origin Control</strong>
+                    Configure allowed origins for CORS protection or allow all.
+                </li>
+                <li>
+                    <strong>Zero Config Start</strong>
+                    Auto-generates default config.yaml on first run.
+                </li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Installation</h2>
+            <p>Install gosocket using Go:</p>
+            <pre><code>go install github.com/your-username/gosocket@latest</code></pre>
+            <p>Or clone and build from source:</p>
+            <pre><code>git clone https://github.com/your-username/gosocket.git
+cd gosocket
+go build -o gosocket .</code></pre>
+        </section>
+
+        <section>
+            <h2>Quick Start</h2>
+            <p>Start the WebSocket server:</p>
+            <pre><code>gosocket start</code></pre>
+            <p>On first run, a <code>config.yaml</code> file is automatically created with default settings. The server listens on port 8080 by default.</p>
+        </section>
+
+        <section>
+            <h2>Configuration</h2>
+            <p>Configure your server by editing <code>config.yaml</code>:</p>
+            <pre><code><span class="comment"># config.yaml</span>
+allowed_origins: []        <span class="comment"># Empty allows all origins</span>
+read_buffer_size: 1024
+write_buffer_size: 1024
+port: <span class="string">"8080"</span>
+auth_token: <span class="string">""</span>             <span class="comment"># Set a token to require authentication</span></code></pre>
+
+            <table class="config-table">
+                <thead>
+                    <tr>
+                        <th>Option</th>
+                        <th>Description</th>
+                        <th>Default</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>allowed_origins</td>
+                        <td>List of allowed origins for CORS. Empty array allows all.</td>
+                        <td>[]</td>
+                    </tr>
+                    <tr>
+                        <td>read_buffer_size</td>
+                        <td>WebSocket read buffer size in bytes.</td>
+                        <td>1024</td>
+                    </tr>
+                    <tr>
+                        <td>write_buffer_size</td>
+                        <td>WebSocket write buffer size in bytes.</td>
+                        <td>1024</td>
+                    </tr>
+                    <tr>
+                        <td>port</td>
+                        <td>Port the server listens on.</td>
+                        <td>"8080"</td>
+                    </tr>
+                    <tr>
+                        <td>auth_token</td>
+                        <td>Optional token for authentication. Empty disables auth.</td>
+                        <td>""</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section>
+            <h2>Connecting to Rooms</h2>
+            <p>Clients connect to rooms via the URL path. The path becomes the room name:</p>
+            <pre><code><span class="comment">// Connect to the "chat" room</span>
+ws://localhost:8080/chat
+
+<span class="comment">// Connect to the "notifications" room</span>
+ws://localhost:8080/notifications
+
+<span class="comment">// Connect with authentication token</span>
+ws://localhost:8080/chat?token=your-secret-token</code></pre>
+
+            <h3>JavaScript Example</h3>
+            <pre><code><span class="comment">// Connect to a room</span>
+<span class="keyword">const</span> ws = <span class="keyword">new</span> WebSocket(<span class="string">'ws://localhost:8080/chat'</span>);
+
+ws.onopen = () => {
+    console.log(<span class="string">'Connected to chat room'</span>);
+    ws.send(<span class="string">'Hello, room!'</span>);
+};
+
+ws.onmessage = (event) => {
+    console.log(<span class="string">'Received:'</span>, event.data);
+};
+
+ws.onclose = () => {
+    console.log(<span class="string">'Disconnected'</span>);
+};</code></pre>
+
+            <h3>Go Example</h3>
+            <pre><code><span class="keyword">import</span> <span class="string">"github.com/gorilla/websocket"</span>
+
+conn, _, err := websocket.DefaultDialer.Dial(<span class="string">"ws://localhost:8080/chat"</span>, nil)
+<span class="keyword">if</span> err != nil {
+    log.Fatal(err)
+}
+<span class="keyword">defer</span> conn.Close()
+
+<span class="comment">// Send a message</span>
+conn.WriteMessage(websocket.TextMessage, []byte(<span class="string">"Hello!"</span>))
+
+<span class="comment">// Read messages</span>
+<span class="keyword">for</span> {
+    _, msg, err := conn.ReadMessage()
+    <span class="keyword">if</span> err != nil {
+        <span class="keyword">break</span>
+    }
+    fmt.Println(<span class="string">"Received:"</span>, string(msg))
+}</code></pre>
+        </section>
+
+        <section>
+            <h2>How It Works</h2>
+            <p>gosocket uses a simple pub/sub model:</p>
+            <ol style="color: var(--text-secondary); margin-left: 1.5rem;">
+                <li style="margin-bottom: 0.5rem;">Client connects to a WebSocket endpoint with a path (e.g., <code>/chat</code>)</li>
+                <li style="margin-bottom: 0.5rem;">The path determines which "room" the client joins</li>
+                <li style="margin-bottom: 0.5rem;">When a client sends a message, it's broadcast to <strong>all clients in that room</strong></li>
+                <li style="margin-bottom: 0.5rem;">When a client disconnects, they're removed from the room</li>
+                <li>Empty rooms are automatically cleaned up</li>
+            </ol>
+        </section>
+
+        <section>
+            <h2>Stats Endpoint</h2>
+            <p>Monitor your server by visiting the stats endpoint:</p>
+            <pre><code>http://localhost:8080/stats</code></pre>
+            <p>This displays the current active rooms and the number of connections in each room.</p>
+        </section>
+
+        <section>
+            <h2>Authentication</h2>
+            <p>To enable authentication, set the <code>auth_token</code> in your config:</p>
+            <pre><code>auth_token: <span class="string">"my-secret-token"</span></code></pre>
+            <p>Clients must then include the token as a query parameter:</p>
+            <pre><code>ws://localhost:8080/chat?token=my-secret-token</code></pre>
+            <p>Connections without a valid token will receive a <code>401 Unauthorized</code> response.</p>
+        </section>
+    </div>
+
+    <footer>
+        <p>Built with Go and <a href="https://github.com/gorilla/websocket">gorilla/websocket</a></p>
+    </footer>
+</body>
+</html>
