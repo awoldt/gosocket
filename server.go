@@ -70,13 +70,6 @@ func main() {
 						},
 					}
 
-					http.HandleFunc("/stats", func(w http.ResponseWriter, r *http.Request) {
-						// count the number of rooms and all connections
-						htmlPage := buildStatsPage()
-
-						w.Write([]byte(htmlPage))
-					})
-
 					http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 						// auth
 						if config.AuthToken != "" {
