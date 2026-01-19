@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"slices"
@@ -20,6 +21,7 @@ type Config struct {
 	ReadBufferSize  int      `yaml:"read_buffer_size"`
 	AuthToken       string   `yaml:"auth_token"`
 	Port            string   `yaml:"port"`
+	Logging         bool     `yaml:"logging"`
 }
 
 var (
@@ -42,10 +44,14 @@ func main() {
 						return fmt.Errorf("%s", err.Error())
 					}
 
-					logrus.SetFormatter(&logrus.TextFormatter{
-						FullTimestamp:   true,
-						TimestampFormat: "2006-01-02 15:04:05",
-					})
+					if config.Logging {
+						logrus.SetFormatter(&logrus.TextFormatter{
+							FullTimestamp:   true,
+							TimestampFormat: "2006-01-02 15:04:05",
+						})
+					} else {
+						logrus.SetOutput(io.Discard)
+					}
 
 					port := config.Port
 
@@ -168,6 +174,7 @@ func initConfig() (Config, error) {
 			WriteBufferSize: 1024,
 			Port:            "8080",
 			AuthToken:       "",
+			Logging:         false,
 		}
 
 		yamlTxt, err := yaml.Marshal(&defaultConfig)
