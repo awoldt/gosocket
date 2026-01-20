@@ -189,122 +189,129 @@
             color: #cf222e;
         }
     </style>
+
+    <script defer src="https://cloud.umami.is/script.js"
+        data-website-id="6c9130b7-ebcd-41df-ba68-b1633e43599e"></script>
 </head>
 
 <body>
     <header>
         <h1>gosocket</h1>
-        <p>A <strong>zero-complexity</strong> pub/sub WebSocket server built for smaller projects and rapid prototyping. Spin up instantly, deploy with ease, and focus on your application logic, not infrastructure.</p>
+        <p>A <strong>zero-complexity</strong> pub/sub WebSocket server built for smaller projects and rapid prototyping.
+            Spin up instantly, deploy with ease, and focus on your application logic, not infrastructure.</p>
     </header>
 
-        <section>
-            <h2>Simplicity First</h2>
-            <p>gosocket is designed for developers who need to add real-time capabilities to smaller apps, prototypes, or MVPs in minutes. It avoids the overhead of complex message brokers by providing a single, focused binary that handles rooms and message broadcasting out of the box.</p>
-        </section>
+    <section>
+        <h2>Simplicity First</h2>
+        <p>gosocket is designed for developers who need to add real-time capabilities to smaller apps, prototypes, or
+            MVPs in minutes. It avoids the overhead of complex message brokers by providing a single, focused binary
+            that handles rooms and message broadcasting out of the box.</p>
+    </section>
 
-        <section>
-            <h2>Installation</h2>
-            <p>Install gosocket using Go:</p>
-            <pre><code>go install github.com/awoldt/gosocket@latest</code></pre>
-            <p>Or clone and build from source:</p>
-            <pre><code>git clone https://github.com/awoldt/gosocket.git
+    <section>
+        <h2>Installation</h2>
+        <p>Install gosocket using Go:</p>
+        <pre><code>go install github.com/awoldt/gosocket@latest</code></pre>
+        <p>Or clone and build from source:</p>
+        <pre><code>git clone https://github.com/awoldt/gosocket.git
 cd gosocket
 go build -o gosocket .</code></pre>
-        </section>
+    </section>
 
-        <section>
-            <h2>Features</h2>
-            <p>Designed for developers who need a reliable WebSocket layer without the overhead of complex message brokers.</p>
-            <ul class="feature-list">
-                <li>
-                    <strong>Room-Based Pub/Sub</strong>
-                    Clients join rooms via URL path. Messages broadcast to all room members.
-                </li>
-                <li>
-                    <strong>YAML Configuration</strong>
-                    Simple config file for origins, buffer sizes, auth, and port settings.
-                </li>
-                <li>
-                    <strong>Token Authentication</strong>
-                    Optional auth token support via query parameter for secure connections.
-                </li>
-                <li>
-                    <strong>Origin Control</strong>
-                    Configure allowed origins for CORS protection or allow all.
-                </li>
-                <li>
-                    <strong>Zero Config Start</strong>
-                    Auto-generates default config.yaml on first run. Start in seconds.
-                </li>
-                <li>
-                    <strong>Single Binary</strong>
-                    Easy to deploy and scale. Just run the binary and you're live.
-                </li>
-            </ul>
-        </section>
+    <section>
+        <h2>Features</h2>
+        <p>Designed for developers who need a reliable WebSocket layer without the overhead of complex message brokers.
+        </p>
+        <ul class="feature-list">
+            <li>
+                <strong>Room-Based Pub/Sub</strong>
+                Clients join rooms via URL path. Messages broadcast to all room members.
+            </li>
+            <li>
+                <strong>YAML Configuration</strong>
+                Simple config file for origins, buffer sizes, auth, and port settings.
+            </li>
+            <li>
+                <strong>Token Authentication</strong>
+                Optional auth token support via query parameter for secure connections.
+            </li>
+            <li>
+                <strong>Origin Control</strong>
+                Configure allowed origins for CORS protection or allow all.
+            </li>
+            <li>
+                <strong>Zero Config Start</strong>
+                Auto-generates default config.yaml on first run. Start in seconds.
+            </li>
+            <li>
+                <strong>Single Binary</strong>
+                Easy to deploy and scale. Just run the binary and you're live.
+            </li>
+        </ul>
+    </section>
 
 
 
-        <section>
-            <h2>Quick Start</h2>
-            <p>Start the WebSocket server:</p>
-            <pre><code>gosocket start</code></pre>
-            <p>On first run, a <code>config.yaml</code> file is automatically created with default settings. The server
-                listens on port 8080 by default.</p>
-        </section>
+    <section>
+        <h2>Quick Start</h2>
+        <p>Start the WebSocket server:</p>
+        <pre><code>gosocket start</code></pre>
+        <p>On first run, a <code>config.yaml</code> file is automatically created with default settings. The server
+            listens on port 8080 by default.</p>
+    </section>
 
-        <section>
-            <h2>Configuration</h2>
-            <p>Configure your server by editing <code>config.yaml</code>:</p>
-            <pre><code><span class="comment"># config.yaml</span>
+    <section>
+        <h2>Configuration</h2>
+        <p>Configure your server by editing <code>config.yaml</code>:</p>
+        <pre><code><span class="comment"># config.yaml</span>
 allowed_origins: []        <span class="comment"># Empty allows all origins</span>
 read_buffer_size: 1024
 write_buffer_size: 1024
 port: <span class="string">"8080"</span>
 auth_token: <span class="string">""</span>             <span class="comment"># Set a token to require authentication</span></code></pre>
 
-            <table class="config-table">
-                <thead>
-                    <tr>
-                        <th>Option</th>
-                        <th>Description</th>
-                        <th>Default</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>allowed_origins</td>
-                        <td>List of allowed origins for CORS. Empty array allows all.</td>
-                        <td>[]</td>
-                    </tr>
-                    <tr>
-                        <td>read_buffer_size</td>
-                        <td>WebSocket read buffer size in bytes.</td>
-                        <td>1024</td>
-                    </tr>
-                    <tr>
-                        <td>write_buffer_size</td>
-                        <td>WebSocket write buffer size in bytes.</td>
-                        <td>1024</td>
-                    </tr>
-                    <tr>
-                        <td>port</td>
-                        <td>Port the server listens on.</td>
-                        <td>"8080"</td>
-                    </tr>
-                    <tr>
-                        <td>auth_token</td>
-                        <td>Optional token for authentication. Empty disables auth.</td>
-                        <td>""</td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
+        <table class="config-table">
+            <thead>
+                <tr>
+                    <th>Option</th>
+                    <th>Description</th>
+                    <th>Default</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>allowed_origins</td>
+                    <td>List of allowed origins for CORS. Empty array allows all.</td>
+                    <td>[]</td>
+                </tr>
+                <tr>
+                    <td>read_buffer_size</td>
+                    <td>WebSocket read buffer size in bytes.</td>
+                    <td>1024</td>
+                </tr>
+                <tr>
+                    <td>write_buffer_size</td>
+                    <td>WebSocket write buffer size in bytes.</td>
+                    <td>1024</td>
+                </tr>
+                <tr>
+                    <td>port</td>
+                    <td>Port the server listens on.</td>
+                    <td>"8080"</td>
+                </tr>
+                <tr>
+                    <td>auth_token</td>
+                    <td>Optional token for authentication. Empty disables auth.</td>
+                    <td>""</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
 
-        <section>
-            <h2>Connecting to Rooms</h2>
-            <p>Clients connect to rooms via the URL path. The path becomes the room name:</p>
-            <pre><code><span class="comment">// Connect to the "chat" room</span>
+    <section>
+        <h2>Connecting to Rooms</h2>
+        <p>Clients connect to rooms via the URL path. The path becomes the room name:</p>
+        <pre><code><span class="comment">// Connect to the "chat" room</span>
 ws://localhost:8080/chat
 
 <span class="comment">// Connect to the "notifications" room</span>
@@ -313,8 +320,8 @@ ws://localhost:8080/notifications
 <span class="comment">// Connect with authentication token</span>
 ws://localhost:8080/chat?token=your-secret-token</code></pre>
 
-            <h3>JavaScript Example</h3>
-            <pre><code><span class="comment">// Connect to a room</span>
+        <h3>JavaScript Example</h3>
+        <pre><code><span class="comment">// Connect to a room</span>
 <span class="keyword">const</span> ws = <span class="keyword">new</span> WebSocket(<span class="string">'ws://localhost:8080/chat'</span>);
 
 ws.onopen = () => {
@@ -330,33 +337,34 @@ ws.onclose = () => {
     console.log(<span class="string">'Disconnected'</span>);
 };</code></pre>
 
-          
-            <p>gosocket uses a simple pub/sub model:</p>
-            <ol style="color: var(--text-secondary); margin-left: 1.5rem;">
-                <li style="margin-bottom: 0.5rem;">Client connects to a WebSocket endpoint with a path (e.g.,
-                    <code>/chat</code>)</li>
-                <li style="margin-bottom: 0.5rem;">The path determines which "room" the client joins</li>
-                <li style="margin-bottom: 0.5rem;">When a client sends a message, it's broadcast to <strong>all clients
-                        in that room</strong></li>
-                <li style="margin-bottom: 0.5rem;">When a client disconnects, they're removed from the room</li>
-                <li>Empty rooms are automatically cleaned up</li>
-            </ol>
+
+        <p>gosocket uses a simple pub/sub model:</p>
+        <ol style="color: var(--text-secondary); margin-left: 1.5rem;">
+            <li style="margin-bottom: 0.5rem;">Client connects to a WebSocket endpoint with a path (e.g.,
+                <code>/chat</code>)
+            </li>
+            <li style="margin-bottom: 0.5rem;">The path determines which "room" the client joins</li>
+            <li style="margin-bottom: 0.5rem;">When a client sends a message, it's broadcast to <strong>all clients
+                    in that room</strong></li>
+            <li style="margin-bottom: 0.5rem;">When a client disconnects, they're removed from the room</li>
+            <li>Empty rooms are automatically cleaned up</li>
+        </ol>
 
 
-        </section>
+    </section>
 
-     
-       
-   
 
-        <section>
-            <h2>Authentication</h2>
-            <p>To enable authentication, set the <code>auth_token</code> in your config:</p>
-            <pre><code>auth_token: <span class="string">"my-secret-token"</span></code></pre>
-            <p>Clients must then include the token as a query parameter:</p>
-            <pre><code>ws://localhost:8080/chat?token=my-secret-token</code></pre>
-            <p>Connections without a valid token will receive a <code>401 Unauthorized</code> response.</p>
-        </section>
+
+
+
+    <section>
+        <h2>Authentication</h2>
+        <p>To enable authentication, set the <code>auth_token</code> in your config:</p>
+        <pre><code>auth_token: <span class="string">"my-secret-token"</span></code></pre>
+        <p>Clients must then include the token as a query parameter:</p>
+        <pre><code>ws://localhost:8080/chat?token=my-secret-token</code></pre>
+        <p>Connections without a valid token will receive a <code>401 Unauthorized</code> response.</p>
+    </section>
     </div>
 
     <footer>
