@@ -1,4 +1,4 @@
-module gosocket
+module github.com/awoldt/gosocket
 
 go 1.25.1
 
