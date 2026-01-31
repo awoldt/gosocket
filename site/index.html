@@ -276,13 +276,17 @@ go build -o gosocket .</code></pre>
             <h2>Quick Start</h2>
             <p>Start the WebSocket server:</p>
             <pre><code>gosocket start</code></pre>
-            <p>On first run, a <code>config.yaml</code> file is automatically created with default settings. The server
-                listens on port 8080 by default.</p>
+            <p>On first run, a <code>config.yaml</code> file is automatically created with default settings in your user
+                config directory. The server listens on port 8080 by default.</p>
         </section>
 
         <section>
             <h2>Configuration</h2>
-            <p>Configure your server by editing <code>config.yaml</code>:</p>
+            <p>gosocket saves its configuration globally. You can find and edit your <code>config.yaml</code> at:</p>
+            <ul style="color: var(--text-secondary); margin-bottom: 1rem; margin-left: 1.5rem;">
+                <li><strong>Linux/macOS:</strong> <code>~/.config/gosocket/config.yaml</code></li>
+                <li><strong>Windows:</strong> <code>%AppData%\gosocket\config.yaml</code></li>
+            </ul>
             <pre><code><span class="comment"># config.yaml</span>
 allowed_origins: []        <span class="comment"># Empty allows all origins</span>
 read_buffer_size: 1024
