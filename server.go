@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"slices"
 	"sync"
 
@@ -44,6 +45,9 @@ func main() {
 						return fmt.Errorf("%s", err.Error())
 					}
 
+					port := config.Port
+					logrus.Infof("websocket server listening on :%v\n", port)
+
 					if config.Logging {
 						logrus.SetFormatter(&logrus.TextFormatter{
 							FullTimestamp:   true,
@@ -52,8 +56,6 @@ func main() {
 					} else {
 						logrus.SetOutput(io.Discard)
 					}
-
-					port := config.Port
 
 					var upgrader = websocket.Upgrader{
 						ReadBufferSize:  config.ReadBufferSize,
@@ -141,7 +143,6 @@ func main() {
 						}
 					})
 
-					logrus.Infof("websocket server listening on :%v\n", port)
 					logrus.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", port), nil))
 					return nil
 				},
@@ -155,27 +156,39 @@ func main() {
 }
 
 func initConfig() (Config, error) {
-	configFile := "config.yaml"
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		return Config{}, fmt.Errorf("could not find user config directory: %w", err)
+	}
+
+	appConfigDir := filepath.Join(configDir, "gosocket")
+	configFile := filepath.Join(appConfigDir, "config.yaml")
 
 	// see if the config file exists
 	// if not, create a default one for user
-	_, err := os.Stat(configFile)
+	_, err = os.Stat(configFile)
 	if err != nil {
+		if err := os.MkdirAll(appConfigDir, 0755); err != nil {
+			return Config{}, fmt.Errorf("could not create config directory: %w", err)
+		}
+
 		var defaultConfig Config = Config{
 			AllowedOrigins:  []string{},
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
 			Port:            "8080",
 			AuthToken:       "",
-			Logging:         false,
+			Logging:         true,
 		}
 
 		yamlTxt, err := yaml.Marshal(&defaultConfig)
 		if err != nil {
 			return Config{}, fmt.Errorf("there was an error while marshalling default yaml config")
 		}
-		os.WriteFile(configFile, yamlTxt, 0644)
-		logrus.Info("initialized default config yaml")
+		if err := os.WriteFile(configFile, yamlTxt, 0644); err != nil {
+			return Config{}, fmt.Errorf("could not write default config file: %w", err)
+		}
+		logrus.Infof("initialized default config yaml at %s", configFile)
 	}
 
 	data, err := os.ReadFile(configFile)
