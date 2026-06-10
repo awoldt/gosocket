@@ -67,16 +67,17 @@ func main() {
 					config = applyConfigFlags(config, c)
 					port := config.Port
 
-					logrus.Infof("websocket server listening on :%v\n", port)
-
 					if config.Logging {
 						logrus.SetFormatter(&logrus.TextFormatter{
 							FullTimestamp:   true,
 							TimestampFormat: "2006-01-02 15:04:05",
 						})
 					} else {
+						fmt.Printf("websocket server listening on port :%v", config.Port)
 						logrus.SetOutput(io.Discard)
 					}
+
+					logrus.Infof("websocket server listening on :%v", port)
 
 					var upgrader = websocket.Upgrader{
 						ReadBufferSize:  config.ReadBufferSize,
