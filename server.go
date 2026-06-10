@@ -67,8 +67,6 @@ func main() {
 					config = applyConfigFlags(config, c)
 					port := config.Port
 
-					fmt.Printf("%v", port)
-
 					logrus.Infof("websocket server listening on :%v\n", port)
 
 					if config.Logging {
