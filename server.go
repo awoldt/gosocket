@@ -6,23 +6,21 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path/filepath"
 	"slices"
 	"sync"
 
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v3"
-	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
-	AllowedOrigins  []string `yaml:"allowed_origins"`
-	WriteBufferSize int      `yaml:"write_buffer_size"`
-	ReadBufferSize  int      `yaml:"read_buffer_size"`
-	AuthToken       string   `yaml:"auth_token"`
-	Port            string   `yaml:"port"`
-	Logging         bool     `yaml:"logging"`
+	AllowedOrigins  []string
+	WriteBufferSize int
+	ReadBufferSize  int
+	AuthToken       string
+	Port            string
+	Logging         bool
 }
 
 var (
@@ -38,14 +36,39 @@ func main() {
 			{
 				Name:  "start",
 				Usage: "Starts the websocket server",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:  "port",
+						Usage: "port for the websocket server to listen on",
+					},
+					&cli.StringSliceFlag{
+						Name:  "allowed_origins",
+						Usage: "origins allowed to connect",
+					},
+					&cli.IntFlag{
+						Name:  "read_buffer_size",
+						Usage: "websocket read buffer size in bytes",
+					},
+					&cli.IntFlag{
+						Name:  "write_buffer_size",
+						Usage: "websocket write buffer size in bytes",
+					},
+					&cli.StringFlag{
+						Name:  "auth_token",
+						Usage: "token required for client connections",
+					},
+					&cli.BoolFlag{
+						Name:  "logging",
+						Usage: "enable server-side logging to the console",
+					},
+				},
 				Action: func(ctx context.Context, c *cli.Command) error {
-					config, err := initConfig()
-					if err != nil {
-						logrus.Error("there was an error while initializing config")
-						return fmt.Errorf("%s", err.Error())
-					}
-
+					config := Config{}
+					config = applyConfigFlags(config, c)
 					port := config.Port
+
+					fmt.Printf("%v", port)
+
 					logrus.Infof("websocket server listening on :%v\n", port)
 
 					if config.Logging {
@@ -155,51 +178,32 @@ func main() {
 	}
 }
 
-func initConfig() (Config, error) {
-	configDir, err := os.UserConfigDir()
-	if err != nil {
-		return Config{}, fmt.Errorf("could not find user config directory: %w", err)
+func applyConfigFlags(config Config, c *cli.Command) Config {
+	if c.IsSet("port") {
+		config.Port = c.String("port")
+	} else {
+		config.Port = "8080"
 	}
-
-	appConfigDir := filepath.Join(configDir, "gosocket")
-	configFile := filepath.Join(appConfigDir, "config.yaml")
-
-	// see if the config file exists
-	// if not, create a default one for user
-	_, err = os.Stat(configFile)
-	if err != nil {
-		if err := os.MkdirAll(appConfigDir, 0755); err != nil {
-			return Config{}, fmt.Errorf("could not create config directory: %w", err)
-		}
-
-		var defaultConfig Config = Config{
-			AllowedOrigins:  []string{},
-			ReadBufferSize:  1024,
-			WriteBufferSize: 1024,
-			Port:            "8080",
-			AuthToken:       "",
-			Logging:         true,
-		}
-
-		yamlTxt, err := yaml.Marshal(&defaultConfig)
-		if err != nil {
-			return Config{}, fmt.Errorf("there was an error while marshalling default yaml config")
-		}
-		if err := os.WriteFile(configFile, yamlTxt, 0644); err != nil {
-			return Config{}, fmt.Errorf("could not write default config file: %w", err)
-		}
-		logrus.Infof("initialized default config yaml at %s", configFile)
+	if c.IsSet("allowed_origins") {
+		config.AllowedOrigins = c.StringSlice("allowed_origins")
 	}
-
-	data, err := os.ReadFile(configFile)
-	if err != nil {
-		return Config{}, fmt.Errorf("there was an error while reading config file")
+	if c.IsSet("read_buffer_size") {
+		config.ReadBufferSize = c.Int("read_buffer_size")
+	} else {
+		config.ReadBufferSize = 1024
 	}
-
-	var config Config
-	if err = yaml.Unmarshal(data, &config); err != nil {
-		return Config{}, fmt.Errorf("error while reading config file")
+	if c.IsSet("write_buffer_size") {
+		config.WriteBufferSize = c.Int("write_buffer_size")
+	} else {
+		config.WriteBufferSize = 1024
 	}
-
-	return config, nil
+	if c.IsSet("auth_token") {
+		config.AuthToken = c.String("auth_token")
+	}
+	if c.IsSet("logging") {
+		config.Logging = c.Bool("logging")
+	} else {
+		config.Logging = false
+	}
+	return config
 }
