@@ -2,8 +2,6 @@ A basic WebSocket server built for smaller projects and rapid prototyping. Run o
 
 ## Installation
 
-Install gosocket using Go:
-
 ```bash
 go install github.com/awoldt/gosocket@latest
 ```
@@ -20,7 +18,7 @@ go build -o gosocket .
 
 Designed for developers who need a reliable WebSocket layer without the overhead of complex message brokers.
 
-- **Room-Based Pub/Sub** — Clients join rooms via URL path. Messages broadcast to all room members.
+- **Room-Based** — Clients join rooms via URL path. Messages broadcast to all room members.
 - **CLI Configuration** — Configure port, origins, buffer sizes, auth, and logging via flags.
 - **Token Authentication** — Optional auth token support via query parameter for secure connections.
 - **Origin Control** — Configure allowed origins for CORS protection or allow all.
@@ -31,7 +29,7 @@ Designed for developers who need a reliable WebSocket layer without the overhead
 Start the WebSocket server:
 
 ```bash
-gosocket start --port 8080 --logging
+gosocket start
 ```
 
 ## Configuration
@@ -45,19 +43,19 @@ All settings are passed as flags on the `start` command:
 | `--read_buffer_size` | WebSocket read buffer size in bytes | `1024` |
 | `--write_buffer_size` | WebSocket write buffer size in bytes | `1024` |
 | `--auth_token` | Token required for client connections. Omit to disable auth. | (none) |
-| `--logging` | Enable server-side logging to the console | `false` |
+| `--logs` | Enables server-side logging to the console | `false` |
 
 Examples:
 
 ```bash
 # Custom port with logging enabled
-gosocket start --port 9000 --logging
+gosocket start --port 9000 --logs
 
 # Restrict origins
 gosocket start --port 8080 --allowed_origins localhost:3000 --allowed_origins localhost:5173
 
 # Require authentication
-gosocket start --port 8080 --auth_token my-secret-token --logging
+gosocket start --port 8080 --auth_token my-secret-token
 ```
 
 ## Connecting to Rooms
@@ -94,11 +92,3 @@ ws.onclose = () => {
     console.log('Disconnected');
 };
 ```
-
-gosocket uses a simple pub/sub model:
-
-1. Client connects to a WebSocket endpoint with a path (e.g., `/chat`)
-2. The path determines which "room" the client joins
-3. When a client sends a message, it's broadcast to **all clients in that room**
-4. When a client disconnects, they're removed from the room
-5. Empty rooms are automatically cleaned up

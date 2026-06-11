@@ -58,8 +58,8 @@ func main() {
 						Usage: "token required for client connections",
 					},
 					&cli.BoolFlag{
-						Name:  "logging",
-						Usage: "enable server-side logging to the console",
+						Name:  "logs",
+						Usage: "Enables server-side logging to the console",
 					},
 				},
 				Action: func(ctx context.Context, c *cli.Command) error {
@@ -67,7 +67,8 @@ func main() {
 					config = applyConfigFlags(config, c)
 					port := config.Port
 
-					if config.Logging {
+					// set logging
+					if !config.Logging {
 						logrus.SetFormatter(&logrus.TextFormatter{
 							FullTimestamp:   true,
 							TimestampFormat: "2006-01-02 15:04:05",
@@ -183,26 +184,32 @@ func applyConfigFlags(config Config, c *cli.Command) Config {
 	} else {
 		config.Port = "8080"
 	}
+
 	if c.IsSet("allowed_origins") {
 		config.AllowedOrigins = c.StringSlice("allowed_origins")
 	}
+
 	if c.IsSet("read_buffer_size") {
 		config.ReadBufferSize = c.Int("read_buffer_size")
 	} else {
 		config.ReadBufferSize = 1024
 	}
+
 	if c.IsSet("write_buffer_size") {
 		config.WriteBufferSize = c.Int("write_buffer_size")
 	} else {
 		config.WriteBufferSize = 1024
 	}
+
 	if c.IsSet("auth_token") {
 		config.AuthToken = c.String("auth_token")
 	}
-	if c.IsSet("logging") {
-		config.Logging = c.Bool("logging")
+
+	if c.IsSet("logs") {
+		config.Logging = c.Bool("logs")
 	} else {
 		config.Logging = false
 	}
+
 	return config
 }
