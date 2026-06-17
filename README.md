@@ -43,7 +43,7 @@ All settings are passed as flags on the `start` command:
 | `--read_buffer_size` | WebSocket read buffer size in bytes | `1024` |
 | `--write_buffer_size` | WebSocket write buffer size in bytes | `1024` |
 | `--auth_token` | Token required for client connections. Omit to disable auth. | (none) |
-| `--logs` | Enables server-side logging to the console | `false` |
+| `--logs` | Enables server-side logging | `false` |
 
 Examples:
 
