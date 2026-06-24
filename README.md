@@ -1,28 +1,10 @@
-A basic WebSocket server built for smaller projects and rapid prototyping. Run one command and have a Websocket server running in seconds.
+A basic WebSocket server built for smaller projects and rapid prototyping. Run one command and have a Websocket server running in seconds. No need to spend time implementing your own server logic.
 
 ## Installation
 
 ```bash
 go install github.com/awoldt/gosocket@latest
 ```
-
-Or clone and build from source:
-
-```bash
-git clone https://github.com/awoldt/gosocket.git
-cd gosocket
-go build -o gosocket .
-```
-
-## Features
-
-Designed for developers who need a reliable WebSocket layer without the overhead of complex message brokers.
-
-- **Room-Based** — Clients join rooms via URL path. Messages broadcast to all room members.
-- **CLI Configuration** — Configure port, origins, buffer sizes, auth, and logging via flags.
-- **Token Authentication** — Optional auth token support via query parameter for secure connections.
-- **Origin Control** — Configure allowed origins for CORS protection or allow all.
-- **Single Binary** — Easy to deploy and scale. Just run the binary and you're live.
 
 ## Quick Start
 
@@ -71,24 +53,4 @@ ws://localhost:8080/notifications
 
 // Connect with authentication token
 ws://localhost:8080/chat?token=your-secret-token
-```
-
-### JavaScript Example
-
-```javascript
-// Connect to a room
-const ws = new WebSocket('ws://localhost:8080/chat');
-
-ws.onopen = () => {
-    console.log('Connected to chat room');
-    ws.send('Hello, room!');
-};
-
-ws.onmessage = (event) => {
-    console.log('Received:', event.data);
-};
-
-ws.onclose = () => {
-    console.log('Disconnected');
-};
 ```

@@ -31,7 +31,7 @@ var (
 func main() {
 	cmd := &cli.Command{
 		Name:        "gosocket",
-		Description: "A lightweight Go-based CLI for interacting with WebSocket APIs",
+		Description: "A lightweight websocket server written in Go",
 		Commands: []*cli.Command{
 			{
 				Name:  "start",
