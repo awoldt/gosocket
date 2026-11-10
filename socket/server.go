@@ -17,11 +17,6 @@ func (s *SocketServer) Join(room string, socket *websocket.Conn) {
 	s.Mu.Lock()
 	defer s.Mu.Unlock()
 
-	// see if room already exists
-	if _, ok := s.Rooms[room]; !ok {
-		s.Rooms[room] = []*websocket.Conn{}
-	}
-
 	socketsInRoom := s.Rooms[room]
 	socketsInRoom = append(socketsInRoom, socket)
 	s.Rooms[room] = socketsInRoom
