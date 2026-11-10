@@ -15,16 +15,24 @@ type SocketServer struct {
 
 func (s *SocketServer) Join(room string, socket *websocket.Conn) {
 	s.Mu.Lock()
+	defer s.Mu.Unlock()
+
+	// see if room already exists
+	if _, ok := s.Rooms[room]; !ok {
+		s.Rooms[room] = []*websocket.Conn{}
+	}
+
 	socketsInRoom := s.Rooms[room]
 	socketsInRoom = append(socketsInRoom, socket)
 	s.Rooms[room] = socketsInRoom
-	s.Mu.Unlock()
 }
 
 func (s *SocketServer) Leave(room string, socket *websocket.Conn) {
 	for i, v := range s.Rooms[room] {
 		if v == socket {
 			s.Mu.Lock()
+			defer s.Mu.Unlock()
+
 			updatedRoom := slices.Delete(s.Rooms[room], i, i+1)
 
 			// remove room from map if nobody in there anymore
@@ -33,8 +41,6 @@ func (s *SocketServer) Leave(room string, socket *websocket.Conn) {
 			} else {
 				s.Rooms[room] = updatedRoom
 			}
-
-			s.Mu.Unlock()
 			break
 		}
 	}

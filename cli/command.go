@@ -18,7 +18,9 @@ var StartCommand = &cli.Command{
 		LoggingFlag,
 	},
 	Action: func(ctx context.Context, c *cli.Command) error {
-		var rooms socket.SocketServer
+		var rooms socket.SocketServer = socket.SocketServer{
+			Rooms: make(map[string][]*websocket.Conn),
+		}
 
 		port := c.String("port")
 		logrus.Infof("websocket server listening on :%v", port)
