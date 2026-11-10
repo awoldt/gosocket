@@ -22,8 +22,14 @@ var StartCommand = &cli.Command{
 			Rooms: make(map[string][]*websocket.Conn),
 		}
 
-		port := c.String("port")
-		logrus.Infof("websocket server listening on :%v", port)
+		port := c.String(PortFlagName)
+		logging := c.Bool(LogFlagName)
+		var shouldLog = false
+		if logging {
+			shouldLog = true
+		}
+
+		logrus.Infof("websocket server listening on :%v", port) // always log server starting
 
 		var upgrader = websocket.Upgrader{}
 
@@ -39,14 +45,14 @@ var StartCommand = &cli.Command{
 			// join room
 			roomName := r.URL.Path
 			rooms.Join(roomName, conn)
-			logrus.Info("someone has joined room " + roomName)
+			logInfo(shouldLog, "someone has joined room "+roomName)
 
 			for {
 				messageType, p, err := conn.ReadMessage()
 				if err != nil {
 					// leave room
 					rooms.Leave(roomName, conn)
-					logrus.Info("someone has left room " + roomName)
+					logInfo(shouldLog, "someone has left room "+roomName)
 					return
 				}
 
@@ -58,4 +64,12 @@ var StartCommand = &cli.Command{
 		logrus.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", port), nil))
 		return nil
 	},
+}
+
+// little helper function that will log to terminal
+// if cli flag "log" was passed by user
+func logInfo(shouldLog bool, message string) {
+	if shouldLog {
+		logrus.Info(message)
+	}
 }
