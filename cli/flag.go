@@ -14,4 +14,5 @@ var PortFlag = &cli.StringFlag{
 var LoggingFlag = &cli.BoolFlag{
 	Name:  LogFlagName,
 	Usage: "Enables logging on server",
+	Value: false,
 }
