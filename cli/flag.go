@@ -1,6 +1,9 @@
 package cli
 
-import "github.com/urfave/cli/v3"
+import (
+	"github.com/sirupsen/logrus"
+	"github.com/urfave/cli/v3"
+)
 
 type FlagConfig struct {
 	Port string
@@ -29,5 +32,13 @@ func GetFlagConfig(c *cli.Command) FlagConfig {
 	return FlagConfig{
 		Port,
 		Log,
+	}
+}
+
+// little helper function that will log to terminal
+// if "log" flag was passed by user
+func LogInfo(shouldLog bool, message string) {
+	if shouldLog {
+		logrus.Info(message)
 	}
 }
