@@ -37,7 +37,7 @@ func GetFlagConfig(c *cli.Command) FlagConfig {
 
 // little helper function that will log to terminal
 // if "log" flag was passed by user
-func LogInfo(shouldLog bool, message string) {
+func logInfo(shouldLog bool, message string) {
 	if shouldLog {
 		logrus.Info(message)
 	}

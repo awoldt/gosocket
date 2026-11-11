@@ -39,14 +39,14 @@ func StartServer(ctx context.Context, c *cli.Command) error {
 		// join room
 		roomName := r.URL.Path
 		rooms.Join(roomName, conn)
-		LogInfo(shouldLog, "someone has joined room "+roomName)
+		logInfo(shouldLog, "someone has joined room "+roomName)
 
 		for {
 			messageType, p, err := conn.ReadMessage()
 			if err != nil {
 				// leave room
 				rooms.Leave(roomName, conn)
-				LogInfo(shouldLog, "someone has left room "+roomName)
+				logInfo(shouldLog, "someone has left room "+roomName)
 				return
 			}
 
