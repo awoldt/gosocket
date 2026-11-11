@@ -2,6 +2,11 @@ package cli
 
 import "github.com/urfave/cli/v3"
 
+type FlagConfig struct {
+	Port string
+	Log  bool
+}
+
 const PortFlagName = "port"
 const LogFlagName = "log"
 
@@ -15,4 +20,14 @@ var LoggingFlag = &cli.BoolFlag{
 	Name:  LogFlagName,
 	Usage: "Enables logging on server",
 	Value: false,
+}
+
+func GetFlagConfig(c *cli.Command) FlagConfig {
+	Port := c.String(PortFlagName)
+	Log := c.Bool(LogFlagName)
+
+	return FlagConfig{
+		Port,
+		Log,
+	}
 }

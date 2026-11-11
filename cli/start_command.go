@@ -22,14 +22,14 @@ var StartCommand = &cli.Command{
 			Rooms: make(map[string][]*websocket.Conn),
 		}
 
-		port := c.String(PortFlagName)
-		logging := c.Bool(LogFlagName)
+		flags := GetFlagConfig(c)
+
 		var shouldLog = false
-		if logging {
+		if flags.Log {
 			shouldLog = true
 		}
 
-		logrus.Infof("websocket server listening on :%v", port) // always log server starting
+		logrus.Infof("websocket server listening on :%v", flags.Port) // always log server starting
 
 		var upgrader = websocket.Upgrader{}
 
@@ -61,7 +61,7 @@ var StartCommand = &cli.Command{
 			}
 		})
 
-		logrus.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", port), nil))
+		logrus.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", flags.Port), nil))
 		return nil
 	},
 }
