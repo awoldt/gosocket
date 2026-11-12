@@ -28,10 +28,11 @@ func (s *SocketServer) Join(room string, socket *websocket.Conn) {
 }
 
 func (s *SocketServer) Leave(room string, socket *websocket.Conn) {
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
+
 	for i, v := range s.Rooms[room] {
 		if v == socket {
-			s.Mu.Lock()
-			defer s.Mu.Unlock()
 
 			updatedRoom := slices.Delete(s.Rooms[room], i, i+1)
 
@@ -48,13 +49,16 @@ func (s *SocketServer) Leave(room string, socket *websocket.Conn) {
 
 func (s *SocketServer) SendMessage(room string, messageType int, message []byte, socket *websocket.Conn) {
 	s.Mu.RLock()
+	defer s.Mu.RUnlock()
 
 	for _, conn := range s.Rooms[room] {
+		// dont send to initial sender
+		if conn == socket {
+			continue
+		}
+
 		if err := conn.WriteMessage(messageType, message); err != nil {
-			logrus.Error(err)
-			return
+			logrus.Error(err) // log error and continue
 		}
 	}
-
-	s.Mu.RUnlock()
 }
